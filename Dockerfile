@@ -12,4 +12,4 @@ RUN cd /var/www/app && \
 
 EXPOSE 8080
 # هذا الأمر سيقوم بتنفيذ الهجرة ثم تشغيل السيرفر فوراً
-CMD php artisan migrate --force && apache2-foreground
+CMD ["apache2-foreground"]
