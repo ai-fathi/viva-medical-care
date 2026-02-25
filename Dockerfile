@@ -12,4 +12,3 @@ RUN cd /var/www/app && \
 
 EXPOSE 8080
 # هذا الأمر سيقوم بتنفيذ الهجرة ثم تشغيل السيرفر فوراً
-CMD ["apache2-foreground"]
