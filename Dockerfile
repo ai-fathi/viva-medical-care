@@ -14,4 +14,4 @@ RUN cd /var/www/app && \
 
 EXPOSE 80
 
-CMD ["sh", "-c", "cd /var/www/app && php artisan migrate --force && /start.sh"]
+CMD ["sh", "-c", "cd /var/www/app && php artisan migrate --force && php-fpm -F"]
