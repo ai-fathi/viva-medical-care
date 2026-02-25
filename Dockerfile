@@ -11,3 +11,5 @@ RUN cd /var/www/app && \
     chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
+# هذا الأمر سيقوم بتنفيذ الهجرة ثم تشغيل السيرفر فوراً
+CMD php artisan migrate --force && apache2-foreground
