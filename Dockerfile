@@ -1,19 +1,40 @@
-FROM richarvey/nginx-php-fpm:latest
+# استخدم صورة PHP-FPM الرسمية مع Nginx
+FROM php:8.2-fpm
 
-# نسخ ملفات المشروع إلى المجلد الافتراضي للصورة
-COPY . /var/www/app
+# تثبيت الأدوات اللازمة
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    git \
+    unzip \
+    curl \
+    supervisor \
+    && docker-php-ext-install pdo pdo_pgsql
 
-# إعدادات البيئة الضرورية للصورة
-ENV WEBROOT /var/www/app/public
-ENV PHP_ERRORS_STDERR 1
-ENV RUN_SCRIPTS 1
-ENV SKIP_COMPOSER 1
+# تثبيت Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# تنفيذ عمليات التثبيت وضبط الصلاحيات أثناء البناء
-RUN cd /var/www/app && \
-    composer install --no-dev --optimize-autoloader && \
-    chown -R www-data:www-data /var/www/app/storage /var/www/app/bootstrap/cache && \
-    chmod -R 775 /var/www/app/storage /var/www/app/bootstrap/cache
+# نسخ ملفات المشروع
+WORKDIR /var/www/app
+COPY . .
 
-# السطر الأهم: تشغيل التهجير ثم تشغيل السيرفر باستخدام المسارات المطلقة
-ENTRYPOINT ["sh", "-c", "php /var/www/app/artisan migrate --force && /start.sh"]
+# تثبيت dependencies Laravel
+RUN composer install --no-dev --optimize-autoloader
+
+# إعداد الصلاحيات
+RUN chown -R www-data:www-data /var/www/app/storage /var/www/app/bootstrap/cache \
+    && chmod -R 775 /var/www/app/storage /var/www/app/bootstrap/cache
+
+# توليد مفتاح التطبيق
+RUN php artisan key:generate
+
+# تنفيذ المايجريشن caching
+RUN php artisan migrate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
+
+# فتح البورت
+EXPOSE 80
+
+# تشغيل Laravel + Nginx عند start
+CMD ["sh", "-c", "/usr/sbin/php-fpm8.2 -F"]
