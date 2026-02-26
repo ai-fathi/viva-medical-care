@@ -27,5 +27,14 @@ Route::middleware(['admin.auth'])->group(function () {
     
     Route::get('/dashboard', [AppointmentController::class, 'index'])->name('dashboard');
     Route::post('/appointments/{id}/update', [AppointmentController::class, 'update'])->name('appointments.update');
+    
+});
 
+Route::get('/init-db', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate --force');
+        return "Success! Database tables created: " . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
 });
