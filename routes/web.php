@@ -5,14 +5,15 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 
 /*
 |--------------------------------------------------------------------------
-| مسارات الإصلاح السريع (استخدمها بالترتيب)
+| مسارات الإصلاح السريع
 |--------------------------------------------------------------------------
 */
 
-// 1. رابط تشغيل قاعدة البيانات: /force-migrate
 Route::get('/force-migrate', function () {
     try {
         Artisan::call('migrate', ['--force' => true]);
@@ -22,15 +23,11 @@ Route::get('/force-migrate', function () {
     }
 });
 
-// 2. رابط إنشاء حساب المدير: /force-admin
 Route::get('/force-admin', function () {
     try {
-        $user = User::updateOrCreate(
+        User::updateOrCreate(
             ['email' => 'admin@viva.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('admin123456'),
-            ]
+            ['name' => 'Admin User', 'password' => Hash::make('admin123456')]
         );
         return "تم إنشاء الحساب! الإيميل: admin@viva.com | الباسورد: admin123456";
     } catch (\Exception $e) {
@@ -38,24 +35,25 @@ Route::get('/force-admin', function () {
     }
 });
 
-// رابط اختبار للتأكد من عمل الروابط: /check-test
-Route::get('/check-test', function () {
-    return "الروابط الآن تعمل بشكل صحيح!";
-});
-
 /*
 |--------------------------------------------------------------------------
-| مسارات التطبيق الأصلية
+| مسارات التطبيق المعدلة
 |--------------------------------------------------------------------------
 */
 
+// الصفحة الرئيسية مع تطبيق اللغة من الجلسة
 Route::get('/', function () { 
+    if (Session::has('locale')) {
+        App::setLocale(Session::get('locale'));
+    }
     return view('welcome'); 
 });
 
 Route::post('/appointments/store', [AppointmentController::class, 'store'])->name('appointments.store');
 Route::post('/appointments/check', [AppointmentController::class, 'checkStatus'])->name('appointments.check');
-Route::get('/lang/{locale}', [AppointmentController::class, 'changeLanguage'])->name('lang.switch');
+
+// تغيير المسار هنا لتجنب التعارض مع مجلد lang
+Route::get('/language/{locale}', [AppointmentController::class, 'changeLanguage'])->name('lang.switch');
 
 // لوحة التحكم
 Route::middleware(['admin.auth'])->group(function () {
