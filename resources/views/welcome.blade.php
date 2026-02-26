@@ -23,10 +23,10 @@
         <header class="flex justify-between items-center py-6 border-b dark:border-gray-700">
             <h1 class="text-2xl font-bold text-blue-600">VIVA MEDICAL CARE</h1>
             <div class="flex gap-4">
-                <select onchange="window.location.href='/lang/'+this.value" class="dark:bg-gray-800 border rounded px-2 py-1 outline-none">
-                    <option value="en" {{ app()->getLocale() == 'en' ? 'selected' : '' }}>English</option>
-                    <option value="ar" {{ app()->getLocale() == 'ar' ? 'selected' : '' }}>العربية</option>
-                    <option value="fr" {{ app()->getLocale() == 'fr' ? 'selected' : '' }}>Français</option>
+                <select onchange="window.location.href=this.value" class="dark:bg-gray-800 border rounded px-2 py-1 outline-none">
+                    <option value="{{ route('lang.switch', 'en') }}" {{ app()->getLocale() == 'en' ? 'selected' : '' }}>English</option>
+                    <option value="{{ route('lang.switch', 'ar') }}" {{ app()->getLocale() == 'ar' ? 'selected' : '' }}>العربية</option>
+                    <option value="{{ route('lang.switch', 'fr') }}" {{ app()->getLocale() == 'fr' ? 'selected' : '' }}>Français</option>
                 </select>
                 <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 border rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">🌙</button>
             </div>
@@ -70,11 +70,10 @@
             <form action="{{ route('appointments.store') }}" method="POST" class="space-y-4">
                 @csrf
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" name="first_name" placeholder="{{ __('Name') }}"
-                    class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
+                    <input type="text" name="first_name" placeholder="{{ __('Name') }}" class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
                     <input type="text" name="last_name" placeholder="{{ __('Surname') }}" class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
                 </div>
-                <input type="email" name="email" placeholder="{{ __('Email (Optional)') }}" class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
+                <input type="email" name="email" placeholder="{{ __('Email (Optional)') }}" class="w-full p-3 border rounded-xl dark:bg-gray-700">
                 <input type="tel" name="phone" placeholder="{{ __('Phone Number') }}" class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
                 <select name="treatment_type" class="w-full p-3 border rounded-xl dark:bg-gray-700" required>
                     <option value="General Medicine and Sports Pathologies">{{ __('General Medicine and Sports Pathologies') }}</option>
@@ -97,7 +96,6 @@
             <h2 class="text-2xl font-bold mb-4 text-green-600">{{ __('My Appointments') }}</h2>
             <form action="{{ route('appointments.check') }}" method="POST" class="mb-6">
                 @csrf
-                <p class="text-sm text-gray-500 mb-2">{{ __('Enter your phone to see your confirmed time') }}</p>
                 <div class="flex gap-2">
                     <input type="tel" name="phone" placeholder="05XXXXXXXX" class="flex-1 p-3 border rounded-xl dark:bg-gray-700" required>
                     <button type="submit" class="bg-green-600 text-white px-4 rounded-xl">🔍</button>
@@ -114,7 +112,7 @@
                     </p>
                     <p class="mt-2"><strong>{{ __('Confirmed Time') }}:</strong> 
                         <span class="text-lg font-mono text-blue-700 dark:text-blue-300">
-                            {{ $apt->scheduled_at ? $apt->scheduled_at->format('Y-m-d H:i') : __('Waiting for reception...') }}
+                            {{ $apt->scheduled_at ? \Carbon\Carbon::parse($apt->scheduled_at)->format('Y-m-d H:i') : __('Waiting for reception...') }}
                         </span>
                     </p>
                 </div>
@@ -129,9 +127,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
                 @foreach(range(1, 8) as $i)
                     <div class="group relative overflow-hidden rounded-2xl shadow-md border dark:border-gray-700">
-                        <img src="{{ asset('images/clinic/IMG' . $i . '.jpg') }}" 
-                        alt="Clinic Photo {{ $i }}" 
-                        class="w-full h-48 object-cover transform group-hover:scale-110 transition duration-500">
+                        <img src="{{ asset('images/clinic/IMG' . $i . '.jpg') }}" alt="Clinic Photo {{ $i }}" class="w-full h-48 object-cover transform group-hover:scale-110 transition duration-500">
                     </div>
                 @endforeach
             </div>
@@ -143,7 +139,6 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // إخفاء الشعار بعد 1.5 ثانية
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash');
@@ -153,7 +148,6 @@
             }, 1500);
         });
 
-        // فتح نافذة الحالة تلقائياً إذا كان هناك بحث
         @if(session('appointment_data'))
             openModal('statusModal');
         @endif
