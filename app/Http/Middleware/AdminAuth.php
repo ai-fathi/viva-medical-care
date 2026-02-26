@@ -4,24 +4,28 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use App\Models\Admin;
+use Illuminate\Support\Facades\Hash;
 
 class AdminAuth
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next)
     {
-        // يمكنك تغيير اسم المستخدم وكلمة المرور هنا
-        $adminUser = 'viva_admin'; 
-        $adminPass = 'viva2026_secure'; 
+        // إذا لم يكن هناك admin في session، تحقق من تسجيل دخول تلقائي
+        if (!$request->session()->has('admin_id')) {
 
-        if ($request->getUser() != $adminUser || $request->getPassword() != $adminPass) {
-            $headers = ['WWW-Authenticate' => 'Basic realm="Admin Login"'];
-            return response('Unauthorized', 401, $headers);
+            // إنشاء الحساب الإداري تلقائياً إذا لم يكن موجود
+            $admin = Admin::first();
+            if (!$admin) {
+                $admin = Admin::create([
+                    'name' => 'Admin User',
+                    'email' => 'admin@viva.com',
+                    'password' => Hash::make('admin123456')
+                ]);
+            }
+
+            // إذا حاول الوصول ولم يسجل دخول، أعطه redirect لتسجيل الدخول
+            return redirect('/admin-login');
         }
 
         return $next($request);
