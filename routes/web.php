@@ -1,59 +1,30 @@
-<?php
-
-use App\Http\Controllers\AppointmentController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Http\Request;
 
-/*
-|--------------------------------------------------------------------------
-| مسارات الإصلاح السريع
-|--------------------------------------------------------------------------
-*/
+// صفحة تسجيل الدخول
+Route::get('/admin-login', function () {
+    return view('admin-login');
+})->name('admin.login');
 
-Route::get('/force-migrate', function () {
-    try {
-        Artisan::call('migrate', ['--force' => true]);
-        return "تم إنشاء الجداول بنجاح! المخرجات: " . Artisan::output();
-    } catch (\Exception $e) {
-        return "حدث خطأ أثناء الميجرشن: " . $e->getMessage();
+// تسجيل الدخول بدون shell
+Route::post('/admin-login', function (Request $request) {
+    $admin = Admin::first(); // نستخدم أول حساب
+    if (!$admin || !Hash::check($request->password, $admin->password)) {
+        return back()->withErrors(['email' => 'الإيميل أو كلمة المرور خاطئة']);
     }
+
+    $request->session()->put('admin_id', $admin->id);
+    $request->session()->put('admin_name', $admin->name);
+
+    return redirect('/dashboard');
 });
 
-Route::get('/force-admin', function () {
-    try {
-        User::updateOrCreate(
-            ['email' => 'admin@viva.com'],
-            ['name' => 'Admin User', 'password' => Hash::make('admin123456')]
-        );
-        return "تم إنشاء الحساب! الإيميل: admin@viva.com | الباسورد: admin123456";
-    } catch (\Exception $e) {
-        return "حدث خطأ أثناء إنشاء الحساب: " . $e->getMessage();
-    }
-});
-
-/*
-|--------------------------------------------------------------------------
-| مسارات التطبيق المعدلة
-|--------------------------------------------------------------------------
-*/
-
-// الصفحة الرئيسية مع تطبيق اللغة من الجلسة
-Route::get('/', function () { 
-    if (Session::has('locale')) {
-        App::setLocale(Session::get('locale'));
-    }
-    return view('welcome'); 
-});
-
-Route::post('/appointments/store', [AppointmentController::class, 'store'])->name('appointments.store');
-Route::post('/appointments/check', [AppointmentController::class, 'checkStatus'])->name('appointments.check');
-
-// تغيير المسار هنا لتجنب التعارض مع مجلد lang
-Route::get('/language/{locale}', [AppointmentController::class, 'changeLanguage'])->name('lang.switch');
+// تسجيل الخروج
+Route::get('/admin-logout', function (Request $request) {
+    $request->session()->flush();
+    return redirect('/admin-login');
+})->name('admin.logout');
 
 // لوحة التحكم
 Route::middleware(['admin.auth'])->group(function () {
