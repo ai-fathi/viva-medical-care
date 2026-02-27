@@ -15,8 +15,12 @@
 
     <form method="POST" action="/admin-login">
         @csrf
+        <label>البريد الإلكتروني:</label><br>
+        <input type="email" name="email" required><br><br>
+
         <label>كلمة المرور:</label><br>
         <input type="password" name="password" required><br><br>
+
         <button type="submit">تسجيل دخول</button>
     </form>
 </body>
