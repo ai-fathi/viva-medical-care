@@ -1,15 +1,25 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AppointmentController;
+
+// الصفحة الرئيسية
+Route::get('/', function () {
+    return view('welcome');
+});
 
 // صفحة تسجيل الدخول
 Route::get('/admin-login', function () {
     return view('admin-login');
 })->name('admin.login');
 
-// تسجيل الدخول بدون shell
+// تسجيل الدخول
 Route::post('/admin-login', function (Request $request) {
-    $admin = Admin::first(); // نستخدم أول حساب
+    $admin = Admin::first();
+
     if (!$admin || !Hash::check($request->password, $admin->password)) {
         return back()->withErrors(['email' => 'الإيميل أو كلمة المرور خاطئة']);
     }
