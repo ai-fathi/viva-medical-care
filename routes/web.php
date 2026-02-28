@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\Admin;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Admin;
 use App\Http\Controllers\AppointmentController;
 
 /*
@@ -11,31 +11,35 @@ use App\Http\Controllers\AppointmentController;
 | الصفحة الرئيسية
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', function () {
-    return view('welcome'); // تأكد من وجود resources/views/welcome.blade.php
+    return view('welcome');
 });
 
 /*
 |--------------------------------------------------------------------------
-| تسجيل الدخول والخروج للـ Admin
+| تغيير اللغة
 |--------------------------------------------------------------------------
 */
-// صفحة تسجيل الدخول
+
+Route::get('/lang/{locale}', [AppointmentController::class, 'changeLanguage']);
+
+/*
+|--------------------------------------------------------------------------
+| تسجيل دخول المدير
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/admin-login', function () {
-    return view('admin-login'); // تأكد من وجود resources/views/admin-login.blade.php
-})->name('admin.login');
+    return view('admin-login');
+});
 
-// تسجيل الدخول
 Route::post('/admin-login', function (Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string',
-    ]);
 
-    $admin = Admin::where('email', $request->email)->first();
+    $admin = Admin::first();
 
     if (!$admin || !Hash::check($request->password, $admin->password)) {
-        return back()->withErrors(['email' => 'الإيميل أو كلمة المرور خاطئة']);
+        return back()->withErrors(['password' => 'كلمة المرور خاطئة']);
     }
 
     $request->session()->put('admin_id', $admin->id);
@@ -44,33 +48,23 @@ Route::post('/admin-login', function (Request $request) {
     return redirect('/dashboard');
 });
 
-// تسجيل الخروج
+/*
+|--------------------------------------------------------------------------
+| تسجيل الخروج
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/admin-logout', function (Request $request) {
     $request->session()->flush();
     return redirect('/admin-login');
-})->name('admin.logout');
-
-/*
-|--------------------------------------------------------------------------
-| لوحة التحكم والعمليات المرتبطة بالمواعيد
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['admin.auth'])->group(function () {
-    Route::get('/dashboard', [AppointmentController::class, 'index'])->name('dashboard');
-    Route::post('/appointments/{id}/update', [AppointmentController::class, 'update'])->name('appointments.update');
 });
 
 /*
 |--------------------------------------------------------------------------
-| تغيير اللغة
+| لوحة التحكم
 |--------------------------------------------------------------------------
 */
-Route::get('/language/{locale}', [AppointmentController::class, 'changeLanguage'])->name('lang.switch');
 
-/*
-|--------------------------------------------------------------------------
-| استقبال وحفظ طلبات المواعيد من المرضى
-|--------------------------------------------------------------------------
-*/
-Route::post('/appointments/store', [AppointmentController::class, 'store'])->name('appointments.store');
-Route::post('/appointments/check', [AppointmentController::class, 'checkStatus'])->name('appointments.check');
+Route::middleware(['admin.auth'])->group(function () {
+    Route::get('/dashboard', [AppointmentController::class, 'index']);
+});
