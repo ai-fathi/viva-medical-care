@@ -1,25 +1,27 @@
-FROM richarvey/nginx-php-fpm:latest
+FROM php:8.3-cli
 
-COPY . /var/www/html
+# تثبيت الأدوات المطلوبة
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    zip \
+    curl \
+    && docker-php-ext-install pdo pdo_mysql zip
 
-# إعدادات البيئة الأساسية
-ENV WEBROOT /var/www/html/public
-ENV PHP_ERRORS_STDERR 1
-ENV RUN_SCRIPTS 1
-ENV REAL_IP_HEADER 1
+# تثبيت Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# تعطيل التثبيت التلقائي المسبب للمشاكل وتفعيله يدوياً
-ENV SKIP_COMPOSER 1
+WORKDIR /var/www
 
-# تثبيت الاعتمادات وضبط الصلاحيات
-RUN cd /var/www/html && \
-    composer install --no-dev --optimize-autoloader --no-scripts && \
-    chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
-    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+COPY . .
 
-# سكريبت ما بعد التثبيت لتشغيل الميجرشن
-RUN mkdir -p /var/www/html/scripts && \
-    echo "php /var/www/html/artisan migrate --force" > /var/www/html/scripts/after_deploy.sh && \
-    chmod +x /var/www/html/scripts/after_deploy.sh
+# تثبيت الحزم
+RUN composer install --no-dev --optimize-autoloader
 
-EXPOSE 80
+# إعطاء الصلاحيات
+RUN chmod -R 775 storage bootstrap/cache
+
+EXPOSE 10000
+
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
