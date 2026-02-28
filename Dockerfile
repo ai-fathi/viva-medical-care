@@ -6,17 +6,15 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www
+WORKDIR /var/www/html
 
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
-
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD php artisan key:generate --force && \
-    php artisan config:clear && \
+CMD php artisan config:clear && \
     php artisan migrate --force || true && \
     php -S 0.0.0.0:10000 -t public
